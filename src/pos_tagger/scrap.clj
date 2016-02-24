@@ -1,0 +1,111 @@
+(defn score[map keys]
+  (loop [acc 0 keys (seq keys)]
+    (if keys
+      (recur 
+       ^long (+ ^ long (map (first keys) 0)
+          acc)
+       (next keys))
+      acc)))
+
+
+
+
+(def   ^String f1 "BIGRAM:POS-2:WORD:POS")
+(def   ^String f2 "BIGRAM:POS-2:POS")
+(def   ^String f3 "TRIGRAM:POS-2:POS-1:POS")
+(def   ^String f4 "TRIGRAM:POS-2:POS-1:WORD:POS")
+(def   ^String f5 "TRIGRAM:POS-2:POS-1:WORD-1:WORD:POS")
+(def   ^String f6 "TRIGRAM:POS-2:WORD-2:POS-1:WORD-1:WORD:POS")
+(def   ^String f7 "TRIGRAM:POS-2:WORD-1:WORD:POS")
+(def   ^String f8 "TRIGRAM:POS-2:WORD-1:POS")
+(def   ^String f9 "BIGRAM:POS-1:WORD:POS")
+(def   ^String f10 "BIGRAM:POS-1:POS")
+(def   ^String f11 "BIGRAM:WORD-1:POS-1:WORD")
+(def   ^String f12 "BIGRAM:WORD-1:POS-1:WORD:POS")
+(def   ^String f13 "TRIGRAM:WORD-2:POS-1:WORD:POS")
+(def   ^String f14 "TRIGRAM:WORD-2:POS-1:POS")
+(def   ^String f15 "UNIGRAM:WORD:POS")
+(def   ^String f16 "BIGRAM:WORD-1:WORD:POS")
+(def   ^String f17 "BIGRAM:WORD-1:POS")
+(def   ^String f18 "BRIRAM:WORD-2:WORD")
+(def   ^String f19 "BIGRAM:POS:WORD+1")
+(def   ^String f20 "BIGRAM:WORD:POS:WORD+1")
+(def   ^String f21 "TRIGRAM:WORD-2:WORD-1:POS")
+(def   ^String f22 "TRIGRAM:WORD-2:WORD-1:WORD:POS")
+(def   ^String f23 "TRIGRAM:WORD:POS:WORD+1:WORD+2")
+
+(def   ^String null "NULL")
+
+
+
+(defn yy1y2[model sent i t t1 t2]
+  (let [word-1 (get sent (- i 1) null)
+        word-2 (get sent (- i 2) null)
+        word (sent i)
+        features [[ f1 t2  word   t]
+                  [ f2 t2  t]
+                  [ f3 t2  t1     t]
+                  [ f4 t2  t1     word    t]
+                  [ f5 t2  t1     word-1  word    t]
+                  [ f6 t2  word-2  t1     word-1  word  t]
+                  [ f7 t2  word-1  word    t]
+                  [ f8 t2  word-1  t]]
+            ]
+       (score model features)
+       ))
+
+(defn yy1[model sent i t t1]
+  (let [word-1 (get sent (- i 1) null)
+        word (sent i)
+        word+1 (get sent (+ i 1) null)
+        word+2 (get sent (+ i 2) null)
+        word-2 (get sent (- i 2) null)
+        features  [
+                   [ f9  t1      word     t]
+                   [ f10 t1      t]
+                   [ f11 word-1  t1       word]
+                   [ f12 word-1  t1       word     t]
+                   [ f13 word-2  t1       word     t]
+                   [ f14 word-2  t1       t]
+                   [ f15 word    t]
+                   [ f16 word-1  word     t]
+                   [ f17 word-1  t]
+                   [ f18 word-2  word]
+                   [ f19 t       word+1]
+                   [ f20 word    t        word+1]
+                   [ f21 word-2  word-1   t]
+                   [ f22 word-2  word-1   word     t]
+                   [ f23 word    t        word+1   word+2]
+                   ]]
+    (score model features)))
+
+
+
+(defmacro yy1macro[model sent i t t1]
+  `(let [word-1# (get ~sent (- ~i 1) ~null)
+        word# (~sent ~i)
+        word+1# (get ~sent (+ ~i 1) ~null)
+        word+2# (get ~sent (+ ~i 2) ~null)
+        word-2# (get ~sent (- ~i 2) ~null)
+        features#  [
+                   [ ~f9  ~t1      word#     ~t]
+                   [ ~f10 ~t1      ~t]
+                   [ ~f11 word-1#  ~t1       word#]
+                   [ ~f12 word-1#  ~t1       word#     ~t]
+                   [ ~f13 word-2#  ~t1       word#     ~t]
+                   [ ~f14 word-2#  ~t1       ~t]
+                   [ ~f15 word#    ~t]
+                   [ ~f16 word-1#  word#     ~t]
+                   [ ~f17 word-1#  ~t]
+                   [ ~f18 word-2#  word#]
+                   [ ~f19 ~t       word+1#]
+                   [ ~f20 word#    ~t        word+1#]
+                   [ ~f21 word-2#  word-1#   ~t]
+                   [ ~f22 word-2#  word-1#   word#     ~t]
+                   [ ~f23 word#    ~t        word+1#   word+2#]
+                   ]]
+    (score ~model features#)))
+        
+
+
+

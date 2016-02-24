@@ -1,0 +1,92 @@
+(ns pos_tagger.core)
+
+(import [java.io File FileReader BufferedReader FileWriter BufferedWriter])
+
+(require '[clojure.string :as str])
+
+(require '[clojure.core.reducers :as r])
+
+(require '[clojure.set :as s])
+
+(require '[criterium.core :as c])
+
+
+(defn reader[file] (-> file File. FileReader. BufferedReader.))
+
+
+(defn getLines[reader]
+  (with-open [file reader]
+    (loop [acc []]
+      (if-let [line (.readLine file)]
+        (recur (conj acc line))
+        acc))))
+
+
+(defn merge-outer
+  [f & maps]
+  (when (some identity maps)
+    (let [merge-entry (fn [m e]
+                        (let [k (key e) v (val e)]
+                            (assoc m k (f (get m k 0) v))))
+          merge2      (fn [m1 m2]
+                        (reduce merge-entry (or m1 {}) (seq m2)))]
+      (reduce merge2 maps))))
+
+
+(defn merge-inner
+  [f & maps]
+  (when (some identity maps)
+    (let [merge-entry (fn [m e]
+                        (let [k (key e) v (val e)]
+                          (if (contains? m k)
+                            (assoc m k (f (get m k) v))
+                            m)))
+          merge2 (fn [m1 m2]
+                   (reduce merge-entry (or m1 {}) (seq m2)))]
+      (reduce merge2 maps))))
+
+
+(def raw (getLines (reader "/home/chege/nlp_code/tagging/pos.txt")))
+
+
+(def sents (map 
+            (comp
+             #(assoc % :F (global-features %))
+             #(zipmap [:sent :pos] %) 
+             #(map 
+               (fn[x](str/split x #"\s")) 
+               %)
+             #(str/split % #"\t")) 
+            raw))
+
+
+(def tags (let [V (vec (set (mapcat :pos sents)))
+                U (conj V "*")
+                T U] {:U U :V V :T T}))
+
+
+(def V (r/fold (partial merge-with +) (pmap :F sents)))
+
+
+(def ^:const  ep -1000000)
+
+
+(defn viterbi
+  [model tags sent]
+  (let [pi (atom {[-1 * *] 1})]
+    (let [{:keys [U V T]} tags
+           N (range (count sent))
+          ]
+      (doall (for [k N u U v V]
+               (let [const (yy1 model sent k v u)
+                     g #(yy1y2 model sent k v u %)
+                     k-1 (- k 1)
+                     [score t]  (apply max-key first 
+                                       (map
+                                        (fn[t] [(+ (@pi [k-1 t u] ep) const (g t)) t])
+                                        T))
+                     ]
+                 (swap! pi assoc (with-meta [k u v] {:t t}) score)))))
+    @pi))
+                
+                 
